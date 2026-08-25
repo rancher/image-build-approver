@@ -1,0 +1,14 @@
+{
+  "repositories": [
+    { "name": "image-build-containerd" },
+    { "name": "image-build-external-snapshotter" },
+    { "name": "image-build-csi-resizer" },
+    { "name": "image-build-csi-attacher" },
+    { "name": "image-build-csi-node-driver-registrar" },
+    { "name": "image-build-csi-provisioner" },
+    { "name": "image-build-livenessprobe" },
+    { "name": "image-build-cloud-provider-vsphere" },
+    { "name": "image-build-traefik" },
+    { "name": "image-build-dns-nodecache" }
+  ]
+}
