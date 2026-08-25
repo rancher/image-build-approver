@@ -5,6 +5,11 @@ on:
     # 06:00 EST, Monday through Friday
     - cron: '0 11 * * 1-5'
   workflow_dispatch:
+    inputs:
+      repository:
+        description: Optional process a single image-build repository
+        required: false
+        type: string
 
 concurrency:
   group: auto-approve
@@ -26,12 +31,20 @@ jobs:
 
       - name: Read configured repositories
         id: configured-repos
+        env:
+          TARGET_REPOSITORY: ${{ github.event_name == 'workflow_dispatch' && inputs.repository || '' }}
         run: |
           set -euo pipefail
 
           {
             echo 'repositories<<EOF'
-            jq -r '.repositories[].name' config.json
+            jq -r --arg target "$TARGET_REPOSITORY" '
+              if $target == "" then .repositories
+              elif ($target | test("^image-build-[a-z0-9][a-z0-9.-]*$")) and any(.repositories[]; .name == $target) then
+                [.repositories[] | select(.name == $target)]
+              else error("repository must be a configured image-build-* repository")
+              end | .[].name
+            ' config.json
             echo 'EOF'
           } >> "$GITHUB_OUTPUT"
 
@@ -59,13 +72,19 @@ jobs:
         id: pr-config
         env:
           OWNER: ${{ github.repository_owner }}
+          TARGET_REPOSITORY: ${{ github.event_name == 'workflow_dispatch' && inputs.repository || '' }}
         run: |
           set -euo pipefail
 
           {
             echo 'repositories<<EOF'
-            jq -c --arg owner "$OWNER" \
-              '.repositories[] | {repo: "\($owner)/\(.name)", regexes: (.regexes // [])}' config.json
+            jq -c --arg owner "$OWNER" --arg target "$TARGET_REPOSITORY" '
+              if $target == "" then .repositories
+              elif ($target | test("^image-build-[a-z0-9][a-z0-9.-]*$")) and any(.repositories[]; .name == $target) then
+                [.repositories[] | select(.name == $target)]
+              else error("repository must be a configured image-build-* repository")
+              end | .[] | {repo: "\($owner)/\(.name)", regexes: (.regexes // [])}
+            ' config.json
             echo 'EOF'
           } >> "$GITHUB_OUTPUT"
 
