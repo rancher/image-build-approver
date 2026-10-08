@@ -9,7 +9,7 @@ Each configured repository is evaluated for PRs that change the root-level `TAG`
   "repositories": [
     {
       "name": "image-build-example",
-      "regexes": ["^ALPINE_VERSION=", "^SOME_OTHER_IMAGE="]
+      "regexes": ["^ARG ALPINE_VERSION=", "^ARG SOME_OTHER_IMAGE="]
     }
   ]
 }
