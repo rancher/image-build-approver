@@ -10,6 +10,12 @@
     { "name": "image-build-cloud-provider-vsphere" },
     { "name": "image-build-traefik" },
     { "name": "image-build-dns-nodecache" },
-    { "name": "image-build-vsphere-csi-driver" }
+    { "name": "image-build-vsphere-csi-driver" },
+    { "name": "image-build-runc"},
+    { "name": "image-build-k8s-metrics-server" },
+    { "name": "image-build-whereabouts" },
+    { "name": "image-build-crictl" },
+    { "name": "image-build-cni-plugins", "regexes": ["^ARG FLANNEL_TAG=", "^ARG BOND_COMMIT="] },
+    { "name": "image-build-cluster-proportional-autoscaler" }
   ]
 }
