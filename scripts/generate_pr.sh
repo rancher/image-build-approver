@@ -8,7 +8,8 @@ owner=rancher
 repo_filter=
 repo_dir=
 dry_run=false
-branch=central-go-overrides
+branch_suffix=$(od -An -N4 -tx4 /dev/urandom | tr -d ' \n')
+branch="central-go-overrides-$branch_suffix"
 
 usage() {
   echo "Usage: $0 [--dry-run] [--repo NAME] [--owner OWNER] [--policy FILE] [--repo-dir DIR]"
@@ -61,6 +62,24 @@ summarize() {
   fi
 }
 
+prune_closed_branches() {
+  local repo=$1
+  local dir=$2
+  local closed_branches open_branches branch
+  closed_branches=$(gh pr list --repo "$owner/$repo" --search 'is:closed is:pr head:central-go-overrides-' --json headRefName --jq '.[].headRefName' | sort -u)
+  open_branches=$(gh pr list --repo "$owner/$repo" --search 'is:open is:pr head:central-go-overrides-' --json headRefName --jq '.[].headRefName' | sort -u)
+  while IFS= read -r branch; do
+    [[ -z "$branch" ]] && continue
+    if grep -Fxq "$branch" <<< "$open_branches"; then
+      continue
+    fi
+    if git -C "$dir" ls-remote --exit-code --heads origin "refs/heads/$branch" > /dev/null; then
+      summarize "Deleting closed central override branch $branch in $owner/$repo."
+      git -C "$dir" push origin --delete "$branch"
+    fi
+  done <<< "$closed_branches"
+}
+
 if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
   printf '## Central Go override results\n' >> "$GITHUB_STEP_SUMMARY"
 fi
@@ -71,6 +90,9 @@ while IFS= read -r repo; do
   else
     dir="$workdir/$repo"
     gh repo clone "$owner/$repo" "$dir" -- --depth=1
+  fi
+  if [[ "$dry_run" != true ]]; then
+    prune_closed_branches "$repo" "$dir"
   fi
 
   args=(--policy "$policy" --repo "$repo" --repo-dir "$dir")
