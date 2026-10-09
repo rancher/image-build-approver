@@ -1,0 +1,38 @@
+{
+  "modules": {
+    "golang.org/x/net": {
+      "targetVersion": "v0.60.0",
+      "cves": "CVE-2026-97032, CVE-2026-78659, CVE-2026-78663, CVE-2026-78669",
+      "minimumGo": "1.26.0"
+    },
+    "golang.org/x/text": {
+      "targetVersion": "v0.39.0",
+      "cves": "CVE-2026-56852",
+      "minimumGo": "1.25.0"
+    },
+    "golang.org/x/crypto": {
+      "targetVersion": "v0.56.0",
+      "cves": "CVE-2026-56855, CVE-2026-78662",
+      "minimumGo": "1.26.0"
+    }
+  },
+  "repositories": [
+    { "name": "image-build-containerd" },
+    { "name": "image-build-external-snapshotter" },
+    { "name": "image-build-csi-resizer" },
+    { "name": "image-build-csi-attacher" },
+    { "name": "image-build-csi-node-driver-registrar" },
+    { "name": "image-build-csi-provisioner" },
+    { "name": "image-build-livenessprobe" },
+    { "name": "image-build-cloud-provider-vsphere" },
+    { "name": "image-build-traefik" },
+    { "name": "image-build-dns-nodecache" },
+    { "name": "image-build-vsphere-csi-driver" },
+    { "name": "image-build-runc" },
+    { "name": "image-build-k8s-metrics-server" },
+    { "name": "image-build-whereabouts" },
+    { "name": "image-build-crictl" },
+    { "name": "image-build-cni-plugins" },
+    { "name": "image-build-cluster-proportional-autoscaler" }
+  ]
+}
