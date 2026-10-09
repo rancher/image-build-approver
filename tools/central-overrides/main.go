@@ -244,14 +244,22 @@ func plan(currentPolicy policy, repositoryName, repositoryDir string) (report, *
 	}
 	for index := len(candidates) - 1; index >= 0; index-- {
 		item := candidates[index]
-		lines[item.index] = item.match[1] + item.module + "=" + item.module + "@" + item.target + item.match[5]
-		marker := "# Added by the central override in image-build-approver"
-		annotation := []string{"# " + item.module + ": " + currentPolicy.Modules[item.module].CVEs + ".", marker}
-		if item.index >= 2 && lines[item.index-1] == marker && strings.HasPrefix(lines[item.index-2], "# "+item.module+": ") {
-			lines[item.index-2] = annotation[0]
-			lines[item.index-1] = annotation[1]
+		annotation := []string{
+			"# " + item.module + ": " + currentPolicy.Modules[item.module].CVEs + ".",
+			"# Drop once upstream requires " + item.module + " >= " + item.target,
+			"# Added by the central override in image-build-approver",
+		}
+		directive := item.match[1] + item.module + "=" + item.module + "@" + item.target + item.match[5]
+		start := item.index
+		for previous := item.index - 1; previous >= 0 && strings.HasPrefix(lines[previous], "#"); previous-- {
+			if strings.HasPrefix(lines[previous], "# "+item.module) {
+				start = previous
+			}
+		}
+		if start < item.index {
+			lines = append(lines[:start], append(append(annotation, directive), lines[item.index+1:]...)...)
 		} else {
-			lines = append(lines[:item.index], append(annotation, lines[item.index:]...)...)
+			lines = append(lines[:item.index], append(append(annotation, directive), lines[item.index+1:]...)...)
 		}
 	}
 	updated := strings.Join(lines, "\n") + "\n"

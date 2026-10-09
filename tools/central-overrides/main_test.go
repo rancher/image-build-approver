@@ -101,6 +101,7 @@ func TestPlan(t *testing.T) {
 		wantBlocked    []string
 		wantErr        string
 		outputContains []string
+		outputExcludes []string
 		wantUpdated    bool
 	}{
 		{
@@ -111,19 +112,20 @@ func TestPlan(t *testing.T) {
 			wantUpdates:   []string{"golang.org/x/crypto: v0.52.0 -> v0.56.0"},
 			wantUpdated:   true,
 			outputContains: []string{
-				"# golang.org/x/crypto: CVE-2026-56855, CVE-2026-78662.\n# Added by the central override in image-build-approver\n-replace golang.org/x/crypto=golang.org/x/crypto@v0.56.0",
+				"# golang.org/x/crypto: CVE-2026-56855, CVE-2026-78662.\n# Drop once upstream requires golang.org/x/crypto >= v0.56.0\n# Added by the central override in image-build-approver\n-replace golang.org/x/crypto=golang.org/x/crypto@v0.56.0",
 			},
 		},
 		{
-			name:          "refreshes existing canonical annotation",
+			name:          "replaces existing module comment section",
 			currentPolicy: testPolicy(),
 			dockerfile:    compatibleDockerfile,
-			overrides:     "# golang.org/x/crypto: CVE-2026-0000.\n# Added by the central override in image-build-approver\n" + currentOverride,
+			overrides:     "# golang.org/x/crypto: CVE-2026-0000.\n# Drop once upstream requires golang.org/x/crypto >= v0.52.0\n" + currentOverride,
 			wantUpdates:   []string{"golang.org/x/crypto: v0.52.0 -> v0.56.0"},
 			wantUpdated:   true,
 			outputContains: []string{
-				"# golang.org/x/crypto: CVE-2026-56855, CVE-2026-78662.\n# Added by the central override in image-build-approver\n-replace golang.org/x/crypto=golang.org/x/crypto@v0.56.0",
+				"# golang.org/x/crypto: CVE-2026-56855, CVE-2026-78662.\n# Drop once upstream requires golang.org/x/crypto >= v0.56.0\n# Added by the central override in image-build-approver\n-replace golang.org/x/crypto=golang.org/x/crypto@v0.56.0",
 			},
+			outputExcludes: []string{"CVE-2026-0000", "v0.52.0"},
 		},
 		{
 			name:          "held override",
@@ -221,6 +223,11 @@ func TestPlan(t *testing.T) {
 				for _, expected := range test.outputContains {
 					if !strings.Contains(*updated, expected) {
 						t.Fatalf("updated overrides %q does not contain %q", *updated, expected)
+					}
+				}
+				for _, unexpected := range test.outputExcludes {
+					if strings.Contains(*updated, unexpected) {
+						t.Fatalf("updated overrides %q unexpectedly contains %q", *updated, unexpected)
 					}
 				}
 			}

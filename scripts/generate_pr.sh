@@ -122,7 +122,7 @@ while IFS= read -r repo; do
   git -C "$dir" push origin "HEAD:refs/heads/$branch"
   body=$(jq -r --argjson result "$result" '
     .modules as $modules |
-    "Update existing root go-mod-overrides targets per rancher/image-build-approver overrides_central.json.\n\n" +
+    "Update existing go-mod-overrides targets per [rancher/image-build-approver/overrides_central.json](https://github.com/rancher/image-build-approver/blob/main/overrides_central.json).\n\n" +
     ([$result.updates[] | split(": ")[0] as $module |
       "- \(.): \($modules[$module].cves)"] | join("\n")) +
     "\n\nNo new override modules are added. Review build compatibility before merging."
