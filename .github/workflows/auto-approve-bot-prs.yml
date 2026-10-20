@@ -2,8 +2,10 @@ name: Renovate Auto-Approve
 
 on:
   schedule:
-    # 06:00 EST, Monday through Friday
-    - cron: '0 11 * * 1-5'
+    # 03:00, 09:00, and 15:00 EST, Monday through Friday
+    - cron: '0 8 * * 1-5'
+    - cron: '0 14 * * 1-5'
+    - cron: '0 20 * * 1-5'
   workflow_dispatch:
     inputs:
       repository:
@@ -157,6 +159,18 @@ jobs:
 
             if [[ "$review_decision" == "APPROVED" ]]; then
               echo "PR $repo#$pr_number is currently approved."
+              continue
+            fi
+
+            checks_status=0
+            checks_json=$(gh pr checks "$pr_number" --repo "$repo" --required --json bucket) || checks_status=$?
+            if (( checks_status != 0 )); then
+              echo "Could not confirm all checks passed for $repo#$pr_number (gh pr checks exited with $checks_status)."
+              continue
+            fi
+            if ! jq -e 'type == "array" and length > 0 and all(.[]; .bucket == "pass")' \
+              <<<"$checks_json" >/dev/null; then
+              echo "Not approving $repo#$pr_number because checks are missing or not all passing."
               continue
             fi
 
