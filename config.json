@@ -1,21 +1,27 @@
 {
   "repositories": [
+    { "name": "image-build-addon-resizer" },
+    { "name": "image-build-calico-operator" },
+    { "name": "image-build-cloud-provider-vsphere" },
+    { "name": "image-build-cluster-proportional-autoscaler" },
+    { "name": "image-build-cni-plugins", "regexes": ["^ARG FLANNEL_TAG=", "^ARG BOND_COMMIT="] },
     { "name": "image-build-containerd" },
-    { "name": "image-build-external-snapshotter" },
-    { "name": "image-build-csi-resizer" },
+    { "name": "image-build-coredns" },
+    { "name": "image-build-crictl" },
     { "name": "image-build-csi-attacher" },
     { "name": "image-build-csi-node-driver-registrar" },
     { "name": "image-build-csi-provisioner" },
-    { "name": "image-build-livenessprobe" },
-    { "name": "image-build-cloud-provider-vsphere" },
-    { "name": "image-build-traefik" },
+    { "name": "image-build-csi-resizer" },
     { "name": "image-build-dns-nodecache" },
-    { "name": "image-build-vsphere-csi-driver" },
-    { "name": "image-build-runc"},
+    { "name": "image-build-etcd" },
+    { "name": "image-build-external-snapshotter" },
+    { "name": "image-build-flannel" },
     { "name": "image-build-k8s-metrics-server" },
-    { "name": "image-build-whereabouts" },
-    { "name": "image-build-crictl" },
-    { "name": "image-build-cni-plugins", "regexes": ["^ARG FLANNEL_TAG=", "^ARG BOND_COMMIT="] },
-    { "name": "image-build-cluster-proportional-autoscaler" }
+    { "name": "image-build-livenessprobe" },
+    { "name": "image-build-multus-dynamic-networks-controller" },
+    { "name": "image-build-runc"},
+    { "name": "image-build-traefik" },
+    { "name": "image-build-vsphere-csi-driver" },
+    { "name": "image-build-whereabouts" }
   ]
 }
