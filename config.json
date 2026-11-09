@@ -18,6 +18,7 @@
     { "name": "image-build-flannel" },
     { "name": "image-build-k8s-metrics-server" },
     { "name": "image-build-livenessprobe" },
+    { "name": "image-build-multus" },
     { "name": "image-build-multus-dynamic-networks-controller" },
     { "name": "image-build-runc"},
     { "name": "image-build-traefik" },
