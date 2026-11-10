@@ -2,6 +2,7 @@
   "repositories": [
     { "name": "image-build-addon-resizer" },
     { "name": "image-build-calico-operator" },
+    { "name": "image-build-calico" },
     { "name": "image-build-cloud-provider-vsphere" },
     { "name": "image-build-cluster-proportional-autoscaler" },
     { "name": "image-build-cni-plugins", "regexes": ["^ARG FLANNEL_TAG=", "^ARG BOND_COMMIT="] },
