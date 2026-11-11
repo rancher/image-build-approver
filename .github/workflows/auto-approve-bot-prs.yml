@@ -127,8 +127,7 @@ jobs:
               echo "Could not read diff for $repo#$pr_number."
               continue
             fi
-            if gh pr diff "$pr_number" --repo "$repo" --name-only | grep -Fxq 'TAG' ||
-              grep -Eq '^[[:space:]]*ARG[[:space:]]+GO_IMAGE=' <<<"$changed_lines"; then
+            if grep -Eq '^[[:space:]]*ARG[[:space:]]+GO_IMAGE=' <<<"$changed_lines"; then
               eligible_prs+=("$repo:$pr_number")
               continue
             fi
