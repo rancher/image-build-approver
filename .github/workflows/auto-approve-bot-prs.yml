@@ -85,7 +85,7 @@ jobs:
               elif ($target | test("^image-build-[a-z0-9][a-z0-9.-]*$")) and any(.repositories[]; .name == $target) then
                 [.repositories[] | select(.name == $target)]
               else error("repository must be a configured image-build-* repository")
-              end | .[] | {repo: "\($owner)/\(.name)", regexes: (.regexes // [])}
+              end | .[] | {repo: "\($owner)/\(.name)", regexes: (.regexes // []), files: (.files // [])}
             ' config.json
             echo 'EOF'
           } >> "$GITHUB_OUTPUT"
@@ -107,7 +107,7 @@ jobs:
             if ! pr_list_json=$(gh pr list --repo "$repo" --state open \
               --author 'app/renovate-rancher' \
               --limit 100 \
-              --json number,autoMergeRequest,headRepository,headRefName \
+              --json number,autoMergeRequest,headRepository,headRefName,changedFiles \
               --jq '.[] | @json'); then
               echo "Failed to get open Renovate PRs from $repo."
               continue
@@ -131,12 +131,44 @@ jobs:
               eligible_prs+=("$repo:$pr_number")
               continue
             fi
+            matched_regex=false
             for regex in "${regexes[@]}"; do
               if grep -Eq -- "$regex" <<<"$changed_lines"; then
                 eligible_prs+=("$repo:$pr_number")
+                matched_regex=true
                 break
               fi
             done
+            if "$matched_regex"; then
+              continue
+            fi
+
+            allowed_files=$(jq -c '.files' <<<"$repo_config")
+            if [[ "$allowed_files" == '[]' ]]; then
+              continue
+            fi
+            if ! changed_files=$(gh api --paginate --slurp "repos/$repo/pulls/$pr_number/files?per_page=100"); then
+              echo "Could not read changed files for $repo#$pr_number."
+              continue
+            fi
+            changed_count=$(jq -r '.changedFiles' <<<"$pr_json")
+            if ! jq -e --argjson count "$changed_count" '
+              type == "array" and all(.[]; type == "array") and
+              ([.[][]] | length == $count and $count > 0 and
+                all(.[]; (.filename | type == "string") and
+                  (if .status == "renamed" then (.previous_filename | type == "string") else true end)))
+            ' <<<"$changed_files" >/dev/null; then
+              echo "Could not confirm the complete changed file list for $repo#$pr_number."
+              continue
+            fi
+            if jq -e --argjson allowed "$allowed_files" '
+              [.[][]] | all(.[]; .filename as $name |
+                ($allowed | index($name)) != null and
+                (if .previous_filename != null then .previous_filename as $old |
+                  ($allowed | index($old)) != null else true end))
+            ' <<<"$changed_files" >/dev/null; then
+              eligible_prs+=("$repo:$pr_number")
+            fi
             done <<<"$pr_list_json"
           done <<<"$REPO_CONFIGS"
 
