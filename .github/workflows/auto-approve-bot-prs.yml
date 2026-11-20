@@ -93,6 +93,7 @@ jobs:
       - name: Find eligible PRs
         id: eligibility
         env:
+          BOT_LOGIN: renovate-rancher[bot]
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           REPO_CONFIGS: ${{ steps.pr-config.outputs.repositories }}
         run: |
@@ -107,7 +108,7 @@ jobs:
             if ! pr_list_json=$(gh pr list --repo "$repo" --state open \
               --author 'app/renovate-rancher' \
               --limit 100 \
-              --json number,autoMergeRequest,headRepository,headRefName,changedFiles \
+              --json number,autoMergeRequest,headRepository,headRefName,changedFiles,labels \
               --jq '.[] | @json'); then
               echo "Failed to get open Renovate PRs from $repo."
               continue
@@ -122,6 +123,41 @@ jobs:
               "$head_ref" != updatecli_* ]]; then
               continue
             fi
+
+            if jq -e 'any(.labels[]?; .name | ascii_downcase |
+              IN("hold", "do-not-merge") or startswith("do-not-merge/"))' <<<"$pr_json" >/dev/null; then
+              echo "Skipping $repo#$pr_number because it has a hold or do-not-merge label."
+              continue
+            fi
+
+            # Commits created through the GitHub API are committed by web-flow.
+            if ! pr_commits=$(gh api --paginate --slurp "repos/$repo/pulls/$pr_number/commits?per_page=100"); then
+              echo "Could not read commits for $repo#$pr_number."
+              continue
+            fi
+            if ! jq -e --arg bot "$BOT_LOGIN" '
+              type == "array" and all(.[]; type == "array") and ([.[][]] | length > 0) and
+              all(.[][]; .author.login == $bot and
+                (.committer.login == $bot or .committer.login == "web-flow"))
+            ' <<<"$pr_commits" >/dev/null; then
+              echo "Skipping $repo#$pr_number because it has commits not authored by $BOT_LOGIN."
+              continue
+            fi
+
+            for activity_endpoint in "pulls/$pr_number/reviews" "pulls/$pr_number/comments" "issues/$pr_number/comments"; do
+              if ! activity=$(gh api --paginate --slurp "repos/$repo/$activity_endpoint?per_page=100"); then
+                echo "Could not read $activity_endpoint for $repo#$pr_number."
+                continue 2
+              fi
+              # Human approvals are allowed; inline comments from them are still caught by pulls/comments.
+              if ! jq -e --arg endpoint "$activity_endpoint" '
+                type == "array" and all(.[]; type == "array") and
+                all(.[][]; .user.type == "Bot" or (($endpoint | endswith("/reviews")) and .state == "APPROVED"))
+              ' <<<"$activity" >/dev/null; then
+                echo "Skipping $repo#$pr_number because a non-bot user left $activity_endpoint."
+                continue 2
+              fi
+            done
 
             if ! changed_lines=$(gh pr diff "$pr_number" --repo "$repo" --patch | sed -n '/^[+-][^+-]/ { s/^[+-]//; p; }'); then
               echo "Could not read diff for $repo#$pr_number."
