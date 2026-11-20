@@ -24,6 +24,6 @@ Before any of these rules are checked, a PR is skipped if any of the following i
 
 - It has a `hold`, `do-not-merge`, or `do-not-merge/*` label.
 - Any commit is not authored by `renovate-rancher[bot]`, or is committed by someone other than `renovate-rancher[bot]` or `web-flow` (GitHub's committer for commits created through the API).
-- A non-bot user has left a review, an inline review comment, or a PR comment.
+- A non-bot user has left an inline review comment, a PR comment, or a review that is not an approval.
 
 A PR is also skipped whenever any of these checks can't be completed because a GitHub API call failed.
