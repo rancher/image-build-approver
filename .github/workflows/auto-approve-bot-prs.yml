@@ -149,8 +149,11 @@ jobs:
                 echo "Could not read $activity_endpoint for $repo#$pr_number."
                 continue 2
               fi
-              if ! jq -e 'type == "array" and all(.[]; type == "array") and all(.[][]; .user.type == "Bot")' \
-                <<<"$activity" >/dev/null; then
+              # Human approvals are allowed; inline comments from them are still caught by pulls/comments.
+              if ! jq -e --arg endpoint "$activity_endpoint" '
+                type == "array" and all(.[]; type == "array") and
+                all(.[][]; .user.type == "Bot" or (($endpoint | endswith("/reviews")) and .state == "APPROVED"))
+              ' <<<"$activity" >/dev/null; then
                 echo "Skipping $repo#$pr_number because a non-bot user left $activity_endpoint."
                 continue 2
               fi
